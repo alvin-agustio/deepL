@@ -1,41 +1,63 @@
+# Import dan Persiapan Model
+%%writefile app.py
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
+import cv2
 
-# Muat model yang sudah dilatih
-model = load_model('asl_model.h5')  # Sesuaikan dengan nama file model Anda
+# Fungsi untuk menghapus latar belakang
+def remove_background_opencv(img):
+    img = np.array(img)  # Convert PIL image to numpy array
+    if len(img.shape) == 3 and img.shape[2] == 3:  # Ensure RGB
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        _, mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
+        mask = mask.astype(np.uint8)
+        bg_removed = cv2.bitwise_and(img, img, mask=mask)
+        return bg_removed
+    else:
+        st.error("Error: Uploaded image is not in RGB format. Please upload a valid image.")
+        return None
 
-# Definisikan kelas yang digunakan dalam model (misalnya, huruf ASL)
-class_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+# Load model dan daftar kelas
+model = load_model('asl_model.h5')
+class_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+               'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+               'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+               'u', 'v', 'w', 'x', 'y', 'z']
 
-# Judul aplikasi
+# Bagian UI untuk judul dan pengunggahan gambar
 st.title('American Sign Language (ASL) Prediction')
-
-# Instruksi untuk pengguna
 st.write("Upload an image of an ASL sign and get the predicted letter!")
-
-# Membuat widget untuk upload gambar
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
-# Jika ada gambar yang diunggah, tampilkan dan prediksi
 if uploaded_file is not None:
-    # Baca gambar dan tampilkan
     img = Image.open(uploaded_file)
+
+    # Menampilkan gambar asli
+    st.subheader("Original Uploaded Image")
     st.image(img, caption='Uploaded Image', use_column_width=True)
 
-    # Preprocessing gambar yang diunggah
-    img = img.resize((128, 128))  # Sesuaikan dengan ukuran yang digunakan model Anda
-    img_array = np.array(img)
-    img_array = img_array / 255.0  # Normalisasi
-    img_array = np.expand_dims(img_array, axis=0)  # Tambahkan dimensi batch
+    # Proses remove background
+    st.write("Processing: Removing background from the image...")
+    img_no_bg = remove_background_opencv(img)
 
-    # Prediksi menggunakan model
-    prediction = model.predict(img_array)
-    predicted_class = np.argmax(prediction, axis=1)
+    if img_no_bg is not None:
+        # Menampilkan gambar tanpa latar belakang
+        st.subheader("Image After Background Removal")
+        st.image(img_no_bg, caption='Image with Background Removed', use_column_width=True)
 
-    # Menampilkan hasil prediksi
-    predicted_letter = class_names[predicted_class[0]]
-    st.markdown(f"<h3 style='text-align: center; color: blue;'>Predicted class: {predicted_letter}</h3>", unsafe_allow_html=True)
+        # Preprocessing dari gambar dan prediksi
+        img_resized = cv2.resize(img_no_bg, (128, 128))
+        img_array = img_resized / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+
+        prediction = model.predict(img_array)
+        predicted_class = np.argmax(prediction, axis=1)
+
+        predicted_letter = class_names[predicted_class[0]]
+        st.markdown(f"<h3 style='text-align: center; color: blue;'>Predicted class: {predicted_letter}</h3>",
+                    unsafe_allow_html=True)
+    else:
+        st.error("Failed to process the image. Please upload another image.")
