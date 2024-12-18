@@ -1,11 +1,11 @@
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
 from rembg import remove
 import io
+import concurrent.futures
 
 # Muat model yang sudah dilatih
 model = load_model('asl_model.h5')  # Sesuaikan dengan nama file model Anda
@@ -29,14 +29,24 @@ def remove_background(image_data):
     output_pil_image = Image.open(io.BytesIO(output_image))
     return output_pil_image
 
+# Fungsi untuk memproses penghapusan latar belakang dalam thread terpisah
+def process_image(image_data):
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(remove_background, image_data)
+        result = future.result()  # Tunggu hingga proses selesai
+    return result
+
 # Jika ada gambar yang diunggah, tampilkan dan prediksi
 if uploaded_file is not None:
     # Baca gambar dan tampilkan
     img = Image.open(uploaded_file)
     st.image(img, caption='Uploaded Image', use_column_width=True)
 
-    # Menghapus latar belakang gambar
-    img_without_bg = remove_background(uploaded_file.read())
+    # Menghapus latar belakang gambar secara paralel
+    with st.spinner('Removing background...'):
+        img_without_bg = process_image(uploaded_file.read())
+    
+    # Tampilkan gambar tanpa latar belakang
     st.image(img_without_bg, caption='Image without Background', use_column_width=True)
 
     # Preprocessing gambar yang diunggah tanpa latar belakang
