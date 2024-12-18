@@ -1,4 +1,3 @@
-# Import dan Persiapan Model
 %%writefile app.py
 import streamlit as st
 import tensorflow as tf
@@ -48,16 +47,19 @@ if uploaded_file is not None:
         st.subheader("Image After Background Removal")
         st.image(img_no_bg, caption='Image with Background Removed', use_column_width=True)
 
-        # Preprocessing dari gambar dan prediksi
-        img_resized = cv2.resize(img_no_bg, (128, 128))
-        img_array = img_resized / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+        # Button untuk melanjutkan prediksi setelah background removal
+        if st.button("Predict ASL Sign"):
+            # Preprocessing dari gambar dan prediksi
+            img_resized = cv2.resize(img_no_bg, (128, 128))
+            img_array = img_resized / 255.0
+            img_array = np.expand_dims(img_array, axis=0)
 
-        prediction = model.predict(img_array)
-        predicted_class = np.argmax(prediction, axis=1)
+            # Prediksi menggunakan model
+            prediction = model.predict(img_array)
+            predicted_class = np.argmax(prediction, axis=1)
 
-        predicted_letter = class_names[predicted_class[0]]
-        st.markdown(f"<h3 style='text-align: center; color: blue;'>Predicted class: {predicted_letter}</h3>",
-                    unsafe_allow_html=True)
+            predicted_letter = class_names[predicted_class[0]]
+            st.markdown(f"<h3 style='text-align: center; color: blue;'>Predicted class: {predicted_letter}</h3>",
+                        unsafe_allow_html=True)
     else:
         st.error("Failed to process the image. Please upload another image.")
