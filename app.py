@@ -35,7 +35,7 @@ if uploaded_file is not None:
 
     # Menampilkan gambar asli
     st.subheader("Original Uploaded Image")
-    st.image(img, caption='Uploaded Image', use_column_width=True)
+    st.image(img, caption='Uploaded Image', use_container_width=True)
 
     # Proses remove background
     st.write("Processing: Removing background from the image...")
