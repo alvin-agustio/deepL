@@ -14,7 +14,7 @@ def predict_with_tflite(interpreter, img_array):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Preprocessing gambar
+    # Preprocessing gambar (normalisasi dan memastikan format yang benar)
     input_data = np.expand_dims(img_array, axis=0).astype(np.float32)
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
@@ -46,10 +46,18 @@ if uploaded_file is not None:
     # Preprocessing gambar yang diunggah
     img = img.resize((128, 128))  # Sesuaikan dengan ukuran yang digunakan model Anda
     img_array = np.array(img)
-    img_array = img_array / 255.0  # Normalisasi
+    img_array = img_array / 255.0  # Normalisasi ke rentang 0-1
+
+    # Cek dimensi gambar
+    st.write(f"Gambar shape setelah preprocessing: {img_array.shape}")
 
     # Prediksi menggunakan model TFLite
     predictions = predict_with_tflite(interpreter, img_array)
+    
+    # Cek hasil output untuk debugging
+    st.write(f"Predictions output shape: {predictions.shape}")
+    
+    # Ambil hasil kelas dengan probabilitas tertinggi
     predicted_class = np.argmax(predictions, axis=1)
 
     # Menampilkan hasil prediksi
