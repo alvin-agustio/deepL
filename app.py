@@ -9,12 +9,12 @@ def load_tflite_model(model_path):
     interpreter.allocate_tensors()
     return interpreter
 
-# Fungsi untuk melakukan prediksi menggunakan TFLite model
+# Fungsi untuk melakukan prediksi menggunakan model TFLite
 def predict_with_tflite(interpreter, img_array):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Preprocessing gambar (normalisasi dan memastikan format yang benar)
+    # Preprocessing gambar
     input_data = np.expand_dims(img_array, axis=0).astype(np.float32)
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
@@ -24,7 +24,7 @@ def predict_with_tflite(interpreter, img_array):
     return output_data
 
 # Muat model TFLite
-model_path = 'asl_model.tflite'  # Pastikan model ada di path ini
+model_path = 'asl_model.tflite'  # Pastikan model Anda berformat .tflite
 interpreter = load_tflite_model(model_path)
 
 # Definisikan kelas yang digunakan dalam model (misalnya, huruf ASL)
