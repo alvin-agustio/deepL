@@ -24,7 +24,8 @@ def predict_with_tflite(interpreter, img_array):
     return output_data
 
 # Muat model TFLite
-interpreter = load_tflite_model('asl_model.tflite')
+model_path = 'asl_model.tflite'  # Pastikan model ada di path ini
+interpreter = load_tflite_model(model_path)
 
 # Definisikan kelas yang digunakan dalam model (misalnya, huruf ASL)
 class_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
@@ -41,6 +42,11 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg
 if uploaded_file is not None:
     # Baca gambar dan tampilkan
     img = Image.open(uploaded_file)
+
+    # Cek apakah gambar dalam mode RGB
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+
     st.image(img, caption='Uploaded Image', use_container_width=True)
 
     # Preprocessing gambar yang diunggah
@@ -48,7 +54,7 @@ if uploaded_file is not None:
     img_array = np.array(img)
     img_array = img_array / 255.0  # Normalisasi ke rentang 0-1
 
-    # Cek dimensi gambar
+    # Cek dimensi gambar setelah preprocessing
     st.write(f"Gambar shape setelah preprocessing: {img_array.shape}")
 
     # Prediksi menggunakan model TFLite
